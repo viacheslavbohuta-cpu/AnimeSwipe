@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
+import Auth from './components/Auth';
 import SwipeCard, {
   type Anime,
   type SwipeAction
 } from './components/SwipeCard';
 
 import './App.css';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const API_URL =
+  import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 interface AnimeResponse {
   media: Anime[];
@@ -35,6 +36,19 @@ interface LibraryAnime {
 }
 
 function App() {
+    const [token, setToken] = useState<string | null>(
+    () => localStorage.getItem('access_token')
+  );
+
+  function handleLogin(newToken: string) {
+    localStorage.setItem('access_token', newToken);
+    setToken(newToken);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('access_token');
+    setToken(null);
+  }
   const [libraryAnime, setLibraryAnime] = useState<LibraryAnime[]>([]);
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [libraryError, setLibraryError] = useState('');
@@ -112,8 +126,8 @@ function App() {
 
     try {
       const endpoint = query
-        ? `${API_BASE_URL}/api/anime/search?q=${encodeURIComponent(query)}&page=${requestedPage}`
-        : `${API_BASE_URL}/api/anime/discover?page=${requestedPage}`;
+        ? `${API_URL}/api/anime/search?q=${encodeURIComponent(query)}&page=${requestedPage}`
+        : `${API_URL}/api/anime/discover?page=${requestedPage}`;
 
       const token = localStorage.getItem('access_token');
 
@@ -205,7 +219,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/library?status=${status}`,
+        `${API_URL}/api/library?status=${status}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -238,7 +252,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/favorites`,
+        `${API_URL}/api/favorites`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -273,7 +287,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/favorites`,
+        `${API_URL}/api/favorites`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -335,7 +349,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/anime/search?q=${encodeURIComponent(trimmedQuery)}&page=1`,
+        `${API_URL}/api/anime/search?q=${encodeURIComponent(trimmedQuery)}&page=1`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -356,10 +370,10 @@ if (!response.ok) {
       setSearchResults(data.media);
 
       const [watchedResponse, watchlistResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/library?status=WATCHED`, {
+        fetch(`${API_URL}/api/library?status=WATCHED`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        fetch(`${API_BASE_URL}/api/library?status=WANT_TO_WATCH`, {
+        fetch(`${API_URL}/api/library?status=WANT_TO_WATCH`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -395,7 +409,7 @@ if (!response.ok) {
     setSearchSuccess('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/swipes`, {
+      const response = await fetch(`${API_URL}/api/swipes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -439,7 +453,7 @@ if (!response.ok) {
     setSearchSuccess('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/swipes`, {
+      const response = await fetch(`${API_URL}/api/swipes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -485,7 +499,7 @@ if (!response.ok) {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/favorites/${item.id}`,
+        `${API_URL}/api/favorites/${item.id}`,
         {
           method: isFavorite ? 'DELETE' : 'POST',
           headers: { Authorization: `Bearer ${token}` }
@@ -529,7 +543,7 @@ if (!response.ok) {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/favorites/${item.anilist_id}`,
+        `${API_URL}/api/favorites/${item.anilist_id}`,
         {
           method: isFavorite ? 'DELETE' : 'POST',
           headers: {
@@ -587,7 +601,7 @@ if (!response.ok) {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/library/${item.anilist_id}`,
+        `${API_URL}/api/library/${item.anilist_id}`,
         {
           method: 'PATCH',
           headers: {
@@ -644,7 +658,7 @@ if (!response.ok) {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/library/${item.anilist_id}`,
+        `${API_URL}/api/library/${item.anilist_id}`,
         {
           method: 'DELETE',
           headers: {
@@ -783,7 +797,7 @@ if (!response.ok) {
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/swipes`,
+        `${API_URL}/api/library?status=${status}`,
         {
           method: 'POST',
           headers: {
@@ -855,6 +869,10 @@ if (!response.ok) {
     }
   }
 
+    if (!token) {
+    return <Auth onLogin={handleLogin} />;
+  }
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -897,6 +915,9 @@ if (!response.ok) {
           </div>
         </div>
       </aside>
+      <button className="logout-button" onClick={handleLogout}>
+  Log out
+</button>
 
       <main className="main-content">
         <header className="topbar">
