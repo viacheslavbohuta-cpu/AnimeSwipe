@@ -797,7 +797,7 @@ if (!response.ok) {
 
     try {
       const response = await fetch(
-        `${API_URL}/api/library?status=${status}`,
+        `${API_URL}/api/swipes`,
         {
           method: 'POST',
           headers: {
